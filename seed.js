@@ -41,7 +41,7 @@ mongoose.connect(process.env.MONGODB_URI)
         { title: 'Term 1 Tuition', amount: 25000, dueDate: '2026-08-01', status: 'Pending' }
       ],
       notices: [
-        { title: 'Chemistry Test Tomorrow', date: '2026-07-21', isNew: true }
+        { title: 'Chemistry Test Tomorrow', date: '2026-07-21', isRecent: true }
       ],
       timetable: [
         { subject: 'Physics', time: '10:00 AM', teacher: 'R. K. Sharma' },

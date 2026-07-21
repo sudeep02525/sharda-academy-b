@@ -23,7 +23,7 @@ const studentSchema = new mongoose.Schema({
     {
       title: { type: String },
       date: { type: String },
-      isNew: { type: Boolean, default: false }
+      isRecent: { type: Boolean, default: false }
     }
   ],
   timetable: [
@@ -33,7 +33,7 @@ const studentSchema = new mongoose.Schema({
       teacher: { type: String }
     }
   ]
-}, { timestamps: true });
+}, { timestamps: true, suppressReservedKeysWarning: true });
 
 const Student = mongoose.model('Student', studentSchema);
 export default Student;
