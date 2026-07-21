@@ -26,7 +26,20 @@ mongoose.connect(MONGODB_URI)
     console.error('Error connecting to MongoDB:', error.message);
   });
 
-// Basic Route
+import authRoutes from './routes/authRoutes.js';
+import studentRoutes from './routes/studentRoutes.js';
+
+import adminRoutes from './routes/adminRoutes.js';
+
+// Application Routes (removed /api prefix)
+app.use('/auth', authRoutes);
+app.use('/student', studentRoutes);
+app.use('/admin', adminRoutes);
+
+// Basic Health Check Routes
+app.get('/health', (req, res) => res.json({ status: 'ok', message: 'Server is healthy' }));
+app.get('/api', (req, res) => res.json({ status: 'ok', message: 'API is reachable' }));
+
 app.get('/', (req, res) => {
   res.send('Sharda Academy API is running...');
 });
