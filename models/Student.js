@@ -5,6 +5,8 @@ const studentSchema = new mongoose.Schema({
   rollNo: { type: String, required: true },
   course: { type: String, default: "JEE Advanced Batch" },
   batch: { type: String, default: "Batch A" },
+  personalInfo: { type: Object },
+  admissionInfo: { type: Object },
   attendance: {
     percentage: { type: Number, default: 0 },
     recent: [
@@ -15,8 +17,10 @@ const studentSchema = new mongoose.Schema({
     {
       title: { type: String },
       amount: { type: Number },
+      amountPaid: { type: Number, default: 0 },
+      paymentMethod: { type: String },
       dueDate: { type: String },
-      status: { type: String, enum: ['Paid', 'Pending', 'Overdue'] }
+      status: { type: String, enum: ['Paid', 'Pending', 'Unpaid', 'Overdue'] }
     }
   ],
   notices: [
@@ -31,6 +35,32 @@ const studentSchema = new mongoose.Schema({
       subject: { type: String },
       time: { type: String },
       teacher: { type: String }
+    }
+  ],
+  homework: [
+    {
+      title: { type: String },
+      description: { type: String },
+      subject: { type: String },
+      dueDate: { type: String },
+      teacherName: { type: String },
+      attachmentName: { type: String },
+      attachmentData: { type: String },
+      cloudinaryPublicId: { type: String },
+      createdAt: { type: Date, default: Date.now }
+    }
+  ],
+  results: [
+    {
+      examName: { type: String },
+      marks: [
+        {
+          subject: { type: String },
+          obtained: { type: Number },
+          max: { type: Number },
+          passingMarks: { type: Number }
+        }
+      ]
     }
   ]
 }, { timestamps: true, suppressReservedKeysWarning: true });

@@ -2,6 +2,8 @@ import express from 'express';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
+import http from 'http';
+import { initSocket } from './socket.js';
 
 dotenv.config();
 
@@ -15,11 +17,14 @@ app.use(express.json());
 const PORT = process.env.PORT || 5000;
 const MONGODB_URI = process.env.MONGODB_URI;
 
+const server = http.createServer(app);
+initSocket(server);
+
 mongoose.connect(MONGODB_URI)
   .then(() => {
     console.log('Connected to MongoDB');
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
+    server.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT} with WebSockets enabled`);
     });
   })
   .catch((error) => {
@@ -30,11 +35,23 @@ import authRoutes from './routes/authRoutes.js';
 import studentRoutes from './routes/studentRoutes.js';
 
 import adminRoutes from './routes/adminRoutes.js';
+import cmsRoutes from './routes/cmsRoutes.js';
+import uploadRoutes from './routes/uploadRoutes.js';
+import admissionRoutes from './routes/admissionRoutes.js';
 
 // Application Routes (removed /api prefix)
 app.use('/auth', authRoutes);
 app.use('/student', studentRoutes);
 app.use('/admin', adminRoutes);
+
+// CMS Universal Route
+app.use('/api/cms', cmsRoutes);
+
+// Upload Route
+app.use('/api/upload', uploadRoutes);
+
+// Admission Inquiries Route (public submit + CMS management)
+app.use('/api/admissions', admissionRoutes);
 
 // Basic Health Check Routes
 app.get('/health', (req, res) => res.json({ status: 'ok', message: 'Server is healthy' }));
