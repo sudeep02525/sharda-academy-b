@@ -38,6 +38,7 @@ import adminRoutes from './routes/adminRoutes.js';
 import cmsRoutes from './routes/cmsRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import admissionRoutes from './routes/admissionRoutes.js';
+import otpRoutes from './routes/otpRoutes.js';
 
 // Application Routes (removed /api prefix)
 app.use('/auth', authRoutes);
@@ -52,6 +53,9 @@ app.use('/api/upload', uploadRoutes);
 
 // Admission Inquiries Route (public submit + CMS management)
 app.use('/api/admissions', admissionRoutes);
+
+// OTP Routes (Universal)
+app.use('/api/otp', otpRoutes);
 
 // Basic Health Check Routes
 app.get('/health', (req, res) => res.json({ status: 'ok', message: 'Server is healthy' }));

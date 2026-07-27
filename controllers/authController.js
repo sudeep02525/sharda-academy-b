@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import User from '../models/User.js';
+import { sendOTP } from '../utils/emailService.js';
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'secret123', {
@@ -47,8 +48,13 @@ export const forgotPassword = async (req, res) => {
     user.resetOtpExpiry = Date.now() + 10 * 60 * 1000; // 10 mins
     await user.save();
     
-    // In real app, send email here. For now, log it.
-    console.log(`Mock Email sent to ${email} with OTP: ${otp}`);
+    // Send email using Resend
+    const emailResult = await sendOTP(email, otp, 'forgot-password');
+    if (!emailResult.success) {
+      return res.status(500).json({ success: false, message: 'Failed to send OTP email' });
+    }
+    
+    console.log(`Email sent via Resend to ${email} with OTP: ${otp}`);
     
     res.json({ success: true, message: 'Recovery code sent' });
   } catch (error) {
