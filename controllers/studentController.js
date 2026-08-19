@@ -1,5 +1,6 @@
 import Student from '../models/Student.js';
 import User from '../models/User.js';
+import Receipt from '../models/Receipt.js';
 import bcrypt from 'bcryptjs';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
@@ -116,8 +117,8 @@ export const createRazorpayOrder = async (req, res) => {
 };
 
 export const verifyRazorpayPayment = async (req, res) => {
-  const { id } = req.params; // fee id
-  const { razorpay_payment_id, razorpay_order_id, razorpay_signature } = req.body;
+  const { id } = req.params; // fee id (can be ignored since we apply automatically)
+  const { razorpay_payment_id, razorpay_order_id, razorpay_signature, paidAmount } = req.body;
   
   try {
     const secret = process.env.RAZORPAY_KEY_SECRET || 'your_key_secret_here';
@@ -131,21 +132,71 @@ export const verifyRazorpayPayment = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Invalid payment signature' });
     }
 
-    // Find student and update the specific fee status to Paid
     const student = await Student.findOne({ user: req.user._id });
-    if (student) {
-      const fee = student.fees.id(id);
-      if (fee) {
-        fee.status = 'Paid';
-        fee.amountPaid = fee.amount;
-        fee.paymentMethod = 'Razorpay Online';
-        await student.save();
+    if (!student) return res.status(404).json({ success: false, message: 'Student not found' });
+    
+    let amountToApply = Number(paidAmount);
+    if (!amountToApply || amountToApply <= 0) {
+      return res.status(400).json({ success: false, message: 'Invalid amount paid' });
+    }
+
+    let totalFee = 0;
+    let oldPaidTillNow = 0;
+    student.fees.forEach(f => {
+      totalFee += f.amount || 0;
+      oldPaidTillNow += f.amountPaid || 0;
+    });
+
+    const pendingFees = student.fees.filter(f => f.status !== 'Paid').sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+    let remainingPayment = amountToApply;
+
+    for (let fee of pendingFees) {
+      if (remainingPayment <= 0) break;
+      const dueOnFee = (fee.amount || 0) - (fee.amountPaid || 0);
+      if (dueOnFee > 0) {
+        const applyToFee = Math.min(dueOnFee, remainingPayment);
+        fee.amountPaid = (fee.amountPaid || 0) + applyToFee;
+        remainingPayment -= applyToFee;
+        if (fee.amountPaid >= fee.amount) {
+          fee.status = 'Paid';
+          fee.paymentMethod = 'Razorpay Online';
+        }
       }
     }
+    await student.save();
+
+    const newPaidTillNow = oldPaidTillNow + amountToApply;
+    const newDue = totalFee - newPaidTillNow;
     
-    res.json({ success: true, message: 'Payment verified successfully' });
+    const count = await Receipt.countDocuments();
+    const receiptNumber = `SA-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, '0')}`;
+
+    const receipt = await Receipt.create({
+      receiptNumber,
+      studentId: req.user._id,
+      amountPaid: amountToApply,
+      totalFee,
+      paidTillNow: newPaidTillNow,
+      dueAmount: newDue,
+      paymentMode: 'Online',
+      transactionId: razorpay_payment_id,
+      collectedBy: null,
+      paymentDate: new Date()
+    });
+
+    res.json({ success: true, message: 'Payment verified successfully', receipt });
   } catch (error) {
     console.error("Razorpay Verify Error:", error);
     res.status(500).json({ success: false, message: 'Verification failed' });
+  }
+};
+
+export const getReceipts = async (req, res) => {
+  try {
+    const receipts = await Receipt.find({ studentId: req.user._id }).sort({ paymentDate: -1 });
+    res.json({ success: true, data: receipts });
+  } catch (error) {
+    console.error('Fetch receipts error:', error);
+    res.status(500).json({ success: false, message: 'Server Error' });
   }
 };

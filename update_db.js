@@ -19,14 +19,14 @@ const MAPPING = {
 
 async function updateSection(page, section, transformData) {
   try {
-    const res = await fetch(`http://localhost:5000/api/cms/${page}/${section}`);
+    const res = await fetch(`https://api.shardaacademyofficial.in/api/cms/${page}/${section}`);
     if (!res.ok) return console.log(`[SKIP] ${page}/${section} (not found)`);
     const json = await res.json();
     if (!json.data) return console.log(`[SKIP] ${page}/${section} (no data)`);
     
     const transformed = transformData(json.data);
     
-    const putRes = await fetch(`http://localhost:5000/api/cms/${page}/${section}`, {
+    const putRes = await fetch(`https://api.shardaacademyofficial.in/api/cms/${page}/${section}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ data: transformed, isPublished: true })
