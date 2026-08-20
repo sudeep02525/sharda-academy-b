@@ -14,7 +14,7 @@ export const getContent = async (req, res) => {
     const content = await CmsContent.findOne({ page, section });
 
     if (!content) {
-      return res.status(404).json({ message: 'Content not found' });
+      return res.status(200).json({ data: null, message: 'Content not found' });
     }
 
     res.status(200).json(content);
@@ -74,7 +74,7 @@ export const updateContent = async (req, res) => {
           isPublished: isPublished !== undefined ? isPublished : true 
         } 
       },
-      { new: true, upsert: true, setDefaultsOnInsert: true }
+      { returnDocument: 'after', upsert: true, setDefaultsOnInsert: true }
     );
 
     res.status(200).json(updatedContent);
