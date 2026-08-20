@@ -5,6 +5,7 @@ import bcrypt from 'bcryptjs';
 import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { v2 as cloudinary } from 'cloudinary';
+import { getIo } from '../socket.js';
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -183,6 +184,16 @@ export const verifyRazorpayPayment = async (req, res) => {
       collectedBy: null,
       paymentDate: new Date()
     });
+
+    try {
+      getIo().to('admins').emit('fee_paid', { 
+        studentName: student.personalInfo?.fullName || "Student", 
+        amount: amountToApply,
+        receiptNumber
+      });
+    } catch (e) {
+      console.error('Socket emit error:', e);
+    }
 
     res.json({ success: true, message: 'Payment verified successfully', receipt });
   } catch (error) {

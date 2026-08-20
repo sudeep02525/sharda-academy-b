@@ -176,7 +176,7 @@ export const addHomework = async (req, res) => {
     });
 
     try {
-      getIo().emit('new_homework', { title, subject, dueDate, teacherName });
+      getIo().to('students').emit('new_homework', { title, subject, dueDate, teacherName });
     } catch (e) {
       console.error('Socket emit error:', e);
     }
@@ -228,7 +228,7 @@ export const addNotice = async (req, res) => {
     });
 
     try {
-      getIo().emit('new_notice', { title, category });
+      getIo().to('students').emit('new_notice', { title, category });
     } catch (e) {
       console.error('Socket emit error:', e);
     }
@@ -247,7 +247,7 @@ export const addFee = async (req, res) => {
     });
 
     try {
-      getIo().emit('new_fee', { title: description, amount, dueDate });
+      getIo().to('students').emit('new_fee', { title: description, amount, dueDate });
     } catch (e) {
       console.error('Socket emit error:', e);
     }

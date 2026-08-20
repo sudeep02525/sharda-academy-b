@@ -13,6 +13,19 @@ export const initSocket = (server) => {
   io.on('connection', (socket) => {
     console.log('New client connected:', socket.id);
     
+    socket.on('join-room', (role) => {
+      if (role === 'cms') {
+        socket.join('cms-admins');
+        console.log(`Socket ${socket.id} joined room: cms-admins`);
+      } else if (role === 'student') {
+        socket.join('students');
+        console.log(`Socket ${socket.id} joined room: students`);
+      } else if (role === 'admin') {
+        socket.join('admins');
+        console.log(`Socket ${socket.id} joined room: admins`);
+      }
+    });
+    
     socket.on('disconnect', () => {
       console.log('Client disconnected:', socket.id);
     });

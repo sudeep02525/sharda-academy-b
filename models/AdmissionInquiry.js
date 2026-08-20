@@ -11,6 +11,7 @@ const AdmissionInquirySchema = new mongoose.Schema({
   batch:       { type: String, required: true },
   address:     { type: String, required: true },
   message:     { type: String, default: '' },
+  documents:   [{ url: String, publicId: String }],
   status:      { type: String, enum: ['New', 'Contacted', 'Enrolled', 'Rejected'], default: 'New' },
   submittedAt: { type: Date, default: Date.now }
 }, { timestamps: true });

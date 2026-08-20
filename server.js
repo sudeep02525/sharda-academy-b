@@ -10,8 +10,9 @@ dotenv.config();
 const app = express();
 
 // Middleware
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002', 'http://localhost:3003', 'https://shardaacademyofficial.in', 'https://student.shardaacademyofficial.in'];
-app.use(cors({ origin: allowedOrigins }));
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 
+['http://localhost:3000','http://localhost:3001','https://shardaacademyofficial.in', 'https://student.shardaacademyofficial.in'];
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 
 // Database Connection
