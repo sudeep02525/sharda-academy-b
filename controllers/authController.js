@@ -1,12 +1,45 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User.js';
+import Student from '../models/Student.js';
 import { sendOTP } from '../utils/emailService.js';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || 'secret123', {
-    expiresIn: '15m',
+    expiresIn: '7d',
   });
+};
+
+const sendTokenResponse = (user, statusCode, res, message = undefined) => {
+  const token = generateToken(user._id);
+  
+  const options = {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/'
+  };
+
+  const responsePayload = {
+    success: true,
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      avatar: user.avatar || user.profilePhoto
+    }
+  };
+  
+  if (message) {
+    responsePayload.message = message;
+  }
+
+  res.status(statusCode).cookie('token', token, options).json(responsePayload);
 };
 
 export const login = async (req, res) => {
@@ -15,22 +48,56 @@ export const login = async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
-    if (user && (await bcrypt.compare(password, user.password))) {
-      res.json({
-        success: true,
-        token: generateToken(user._id),
-        user: {
-          _id: user._id,
-          name: user.name,
-          email: user.email,
-          role: user.role,
-        }
-      });
+    if (user && (await bcrypt.compare(password, user.password || ''))) {
+      sendTokenResponse(user, 200, res);
     } else {
       res.status(401).json({ success: false, message: 'Invalid email or password' });
     }
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server Error' });
+  }
+};
+
+export const googleAuth = async (req, res) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    return res.status(400).json({ success: false, message: 'Token missing' });
+  }
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    let user = await User.findOne({ email });
+    
+    if (!user) {
+      // User is not registered by admin
+      return res.status(403).json({
+        success: false,
+        message: 'Your email is not registered in our system. Please contact the Admin to create your account first.',
+      });
+    } else {
+      // Update existing user with Google details if they log in via Google
+      if (!user.googleId) {
+        user.googleId = googleId;
+        user.avatar = picture;
+        await user.save();
+      }
+    }
+
+    sendTokenResponse(user, 200, res, 'Authentication successful');
+  } catch (error) {
+    console.error('Google token verification failed:', error.message);
+    res.status(401).json({
+      success: false,
+      message: 'Invalid Google Token',
+    });
   }
 };
 
@@ -193,4 +260,30 @@ export const removeAdmin = async (req, res) => {
   } catch (error) {
     res.status(500).json({ success: false, message: 'Server Error' });
   }
+};
+
+export const logout = (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: true,
+    sameSite: 'lax',
+    path: '/'
+  });
+  res.json({ success: true, message: 'Logged out successfully' });
+};
+
+export const me = (req, res) => {
+  if (!req.user) {
+    return res.status(401).json({ success: false, message: 'Not authenticated' });
+  }
+  res.json({
+    success: true,
+    user: {
+      _id: req.user._id,
+      name: req.user.name,
+      email: req.user.email,
+      role: req.user.role,
+      avatar: req.user.avatar || req.user.profilePhoto
+    }
+  });
 };

@@ -3,6 +3,9 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import http from 'http';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { initSocket } from './socket.js';
 
 dotenv.config();
@@ -10,10 +13,23 @@ dotenv.config();
 const app = express();
 
 // Middleware
+app.use(helmet({
+  crossOriginResourcePolicy: false, // prevent breaking existing cross-origin resources
+}));
+app.use(cookieParser());
+
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 
 ['http://localhost:3000','http://localhost:3001','https://shardaacademyofficial.in', 'https://student.shardaacademyofficial.in'];
 app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
+
+// Global Rate Limiting
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per windowMs
+  message: { success: false, message: 'Too many requests from this IP, please try again after 15 minutes' }
+});
+app.use('/api', globalLimiter);
 
 // Database Connection
 const PORT = process.env.PORT || 5000;

@@ -103,6 +103,16 @@ export const createRazorpayOrder = async (req, res) => {
   const { amount } = req.body;
   
   try {
+    const student = await Student.findOne({ user: req.user._id });
+    if (!student) {
+      return res.status(404).json({ success: false, message: 'Student not found' });
+    }
+
+    const feeExists = student.fees.some(f => f._id.toString() === id);
+    if (!feeExists) {
+      return res.status(403).json({ success: false, message: 'Forbidden: Fee record does not belong to this student' });
+    }
+  
     const options = {
       amount: Math.round(amount * 100), // in paise
       currency: "INR",

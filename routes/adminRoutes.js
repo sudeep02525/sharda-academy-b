@@ -1,5 +1,5 @@
 import express from 'express';
-import { protect } from '../middleware/auth.js';
+import { protect, admin } from '../middleware/auth.js';
 import { 
   getAnalytics, syncBiometric, getUsers, addUser, deleteUser, updateUser,
   addHomework, addAttendance, addResult, addNotice, 
@@ -15,7 +15,7 @@ const router = express.Router();
 const upload = multer();
 
 // Apply auth middleware to all admin routes
-router.use(protect);
+router.use(protect, admin);
 
 router.get('/receipts', getReceipts);
 router.post('/fees/cash', recordCashPayment);
