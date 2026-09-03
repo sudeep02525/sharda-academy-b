@@ -6,9 +6,11 @@ import { login, googleAuth, forgotPassword, resetPassword, requestPasswordChange
 const router = express.Router();
 
 const authLimiter = rateLimit({
-  windowMs: 60 * 1000, // 1 minute
+  windowMs: 15 * 60 * 1000, // 15 minutes
   max: 5,
-  message: { success: false, message: 'Too many login attempts, please try again after a minute' }
+  standardHeaders: true,
+  legacyHeaders: true,
+  message: { success: false, message: 'Too many login attempts, please try again after 15 minutes' }
 });
 
 const forgotPasswordLimiter = rateLimit({

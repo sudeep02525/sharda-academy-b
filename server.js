@@ -20,7 +20,11 @@ app.use(cookieParser());
 
 const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : 
 ['http://localhost:3000','http://localhost:3001','https://shardaacademyofficial.in', 'https://student.shardaacademyofficial.in'];
-app.use(cors({ origin: allowedOrigins, credentials: true }));
+app.use(cors({ 
+  origin: allowedOrigins, 
+  credentials: true,
+  exposedHeaders: ['RateLimit-Remaining', 'X-RateLimit-Remaining']
+}));
 app.use(express.json());
 
 // Global Rate Limiting
