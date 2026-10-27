@@ -30,6 +30,7 @@ const sendTokenResponse = (user, statusCode, res, message = undefined) => {
 
   const responsePayload = {
     success: true,
+    token,
     user: {
       _id: user._id,
       name: user.name,
