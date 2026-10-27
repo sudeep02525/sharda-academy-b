@@ -8,7 +8,11 @@ import { sendOTP } from '../utils/emailService.js';
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const generateToken = (id) => {
-  return jwt.sign({ id }, process.env.JWT_SECRET || 'secret123', {
+  if (!process.env.JWT_SECRET) {
+    // Never sign with a guessable fallback: an unset secret means tokens are forgeable.
+    throw new Error('JWT_SECRET is not set');
+  }
+  return jwt.sign({ id }, process.env.JWT_SECRET, {
     expiresIn: '7d',
   });
 };

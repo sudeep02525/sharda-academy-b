@@ -12,9 +12,22 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_API_SECRET
 });
 
-// Configure Multer to use memory storage
+// Configure Multer to use memory storage, with hard limits so the public
+// upload endpoint cannot be used to push large files into our Cloudinary account.
 const storage = multer.memoryStorage();
-const upload = multer({ storage });
+
+const ALLOWED_MIME = new Set(['image/jpeg', 'image/png', 'image/webp', 'application/pdf']);
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024, files: 1 }, // 5 MB, one file
+  fileFilter: (req, file, cb) => {
+    if (!ALLOWED_MIME.has(file.mimetype)) {
+      return cb(new Error('Only JPG, PNG, WEBP or PDF files are allowed.'));
+    }
+    cb(null, true);
+  }
+});
 
 export const uploadMiddleware = upload.single('image');
 

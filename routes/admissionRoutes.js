@@ -13,6 +13,7 @@ cloudinary.config({
 const router = express.Router();
 
 import { getIo } from '../socket.js';
+import { protect, admin } from '../middleware/auth.js';
 
 // POST /api/admissions - Submit a new inquiry (public, no auth)
 router.post('/', async (req, res) => {
@@ -42,7 +43,7 @@ router.post('/', async (req, res) => {
 });
 
 // GET /api/admissions - Get all inquiries (for CMS)
-router.get('/', async (req, res) => {
+router.get('/', protect, admin, async (req, res) => {
   try {
     const inquiries = await AdmissionInquiry.find().sort({ submittedAt: -1 });
     res.json({ success: true, data: inquiries, total: inquiries.length });
@@ -53,7 +54,7 @@ router.get('/', async (req, res) => {
 });
 
 // DELETE /api/admissions/:id - Delete an inquiry (for CMS)
-router.delete('/:id', async (req, res) => {
+router.delete('/:id', protect, admin, async (req, res) => {
   try {
     const inquiry = await AdmissionInquiry.findById(req.params.id);
     if (!inquiry) {
@@ -82,7 +83,7 @@ router.delete('/:id', async (req, res) => {
 });
 
 // PATCH /api/admissions/:id/status - Update status
-router.patch('/:id/status', async (req, res) => {
+router.patch('/:id/status', protect, admin, async (req, res) => {
   try {
     const { status } = req.body;
     const inquiry = await AdmissionInquiry.findByIdAndUpdate(
@@ -98,7 +99,7 @@ router.patch('/:id/status', async (req, res) => {
 });
 
 // DELETE /api/admissions/:id/documents/:publicId - Delete a single document from an inquiry
-router.delete('/:id/documents/:publicId', async (req, res) => {
+router.delete('/:id/documents/:publicId', protect, admin, async (req, res) => {
   try {
     const { id, publicId } = req.params;
     

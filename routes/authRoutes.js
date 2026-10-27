@@ -1,6 +1,6 @@
 import express from 'express';
 import rateLimit from 'express-rate-limit';
-import { protect } from '../middleware/auth.js';
+import { protect, admin } from '../middleware/auth.js';
 import { login, googleAuth, forgotPassword, resetPassword, requestPasswordChange, verifyPasswordChange, getAdmins, addAdmin, removeAdmin, me, logout } from '../controllers/authController.js';
 
 const router = express.Router();
@@ -31,9 +31,9 @@ router.post('/logout', protect, logout);
 router.post('/request-password-change', requestPasswordChange);
 router.post('/verify-password-change', verifyPasswordChange);
 
-// Admin Management routes
-router.get('/admins', getAdmins);
-router.post('/admins', addAdmin);
-router.delete('/admins/:id', removeAdmin);
+// Admin Management routes (admin only)
+router.get('/admins', protect, admin, getAdmins);
+router.post('/admins', protect, admin, addAdmin);
+router.delete('/admins/:id', protect, admin, removeAdmin);
 
 export default router;
